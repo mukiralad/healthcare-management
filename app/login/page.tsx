@@ -24,23 +24,30 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      console.log("Attempting login with email:", `${email}@healthcare.local`)
       const { data, error } = await supabase.auth.signInWithPassword({
         email: `${email}@healthcare.local`,
         password,
       })
 
       if (error) {
+        console.error("Supabase auth error:", error)
         throw error
       }
 
-      // Successful login
+      if (!data?.user) {
+        console.error("No user data returned")
+        throw new Error("Login failed - no user data")
+      }
+
+      console.log("Login successful, redirecting...")
       router.push("/dashboard")
       router.refresh() // Refresh to update server-side session
     } catch (error: any) {
       console.error("Login error:", error)
       toast({
         title: "Authentication failed",
-        description: error?.message || "Please check your credentials and try again",
+        description: error?.message || "Please check your credentials and try again. If the problem persists, ensure you're connected to the internet.",
         variant: "destructive",
       })
     } finally {
