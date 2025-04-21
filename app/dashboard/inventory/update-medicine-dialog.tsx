@@ -26,7 +26,7 @@ import * as z from "zod"
 const formSchema = z.object({
   medicine_name: z.string().min(1, "Medicine name is required"),
   quantity: z.number().min(0, "Quantity must be 0 or greater"),
-  unit: z.string().min(1, "Unit is required"),
+
   min_stock_level: z.number().min(0, "Minimum stock level must be 0 or greater").optional(),
 })
 
@@ -34,7 +34,7 @@ type Medicine = {
   id: string
   medicine_name: string
   quantity: number
-  unit: string
+
   min_stock_level?: number
 }
 
@@ -58,7 +58,7 @@ export function UpdateMedicineDialog({
     defaultValues: {
       medicine_name: "",
       quantity: 0,
-      unit: "",
+
       min_stock_level: 0,
     },
   })
@@ -68,7 +68,7 @@ export function UpdateMedicineDialog({
       form.reset({
         medicine_name: medicine.medicine_name,
         quantity: medicine.quantity,
-        unit: medicine.unit,
+
         min_stock_level: medicine.min_stock_level,
       })
     }
@@ -85,7 +85,7 @@ export function UpdateMedicineDialog({
     const updateValues = !showMinStock ? values : {
       medicine_name: values.medicine_name,
       quantity: values.quantity,
-      unit: values.unit
+
     }
 
     const { error } = await supabase
@@ -145,19 +145,6 @@ export function UpdateMedicineDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {showMinStock && (
               <FormField

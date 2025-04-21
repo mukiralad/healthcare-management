@@ -21,7 +21,7 @@ import { createClient } from "@/lib/supabase/client"
 type Medicine = {
   id: string
   medicine_name: string
-  unit: string
+
 }
 
 interface MedicineAutocompleteProps {
@@ -39,7 +39,7 @@ export function MedicineAutocomplete({ onSelect }: MedicineAutocompleteProps) {
     const fetchAllMedicines = async () => {
       const { data } = await supabase
         .from("master_inventory")
-        .select("id, medicine_name, unit")
+        .select("id, medicine_name")
         .order("medicine_name")
       
       setMedicines(data || [])
