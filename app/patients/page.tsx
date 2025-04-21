@@ -23,55 +23,19 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Search, UserPlus, User } from "lucide-react";
+import { FileText, Search, UserPlus, User, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-// Mock data for development or when database connection fails
-const MOCK_PATIENTS = [
-  {
-    id: "1",
-    name: "John Smith",
-    age: 22,
-    gender: "Male",
-    id_number: "S123456",
-    phone_number: "9876543210",
-    email: "john.smith@pjtsau.edu",
-    role: "Student",
-    created_at: "2024-04-01T10:00:00Z"
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    age: 35,
-    gender: "Female",
-    id_number: "E789012",
-    phone_number: "8765432109",
-    email: "sarah.j@pjtsau.edu",
-    role: "Permanent Employee",
-    created_at: "2024-04-01T09:00:00Z"
-  },
-  {
-    id: "3",
-    name: "Rahul Patel",
-    age: 45,
-    gender: "Male",
-    id_number: "R456789",
-    phone_number: "7654321098",
-    email: "rahul.p@pjtsau.edu",
-    role: "Contract Employee",
-    created_at: "2024-03-29T14:30:00Z"
-  },
-  {
-    id: "4",
-    name: "Priya Singh",
-    age: 19,
-    gender: "Female",
-    id_number: "S654321",
-    phone_number: "6543210987",
-    email: "priya.s@pjtsau.edu",
-    role: "Student",
-    created_at: "2024-03-28T11:15:00Z"
-  }
-];
+
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<any[]>([]);
@@ -79,6 +43,8 @@ export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [genderFilter, setGenderFilter] = useState("");
+  const [patientToDelete, setPatientToDelete] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const supabase = createClientComponentClient();
@@ -95,15 +61,14 @@ export default function PatientsPage() {
           throw error;
         }
 
-        setPatients(data && data.length > 0 ? data : MOCK_PATIENTS);
-      } catch (error) {
+        setPatients(data || []);
+      } catch (error: any) {
         console.error("Error fetching patients:", error);
-        // Use mock data if database fetch fails
-        setPatients(MOCK_PATIENTS);
+        setPatients([]);
         toast({
-          title: "Notice",
-          description: "Using sample patient data. Database connection unavailable.",
-          variant: "default",
+          title: "Error",
+          description: error.message || "Failed to fetch patients",
+          variant: "destructive",
         });
       } finally {
         setLoading(false);
@@ -242,14 +207,27 @@ export default function PatientsPage() {
                       <TableCell>{patient.age}</TableCell>
                       <TableCell>{patient.phone_number}</TableCell>
                       <TableCell>{patient.email || "-"}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewPatient(patient.id)}
-                        >
-                          View Profile
-                        </Button>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewPatient(patient.id)}
+                          >
+                            View Profile
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => {
+                              setPatientToDelete(patient);
+                              setShowDeleteDialog(true);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -259,6 +237,82 @@ export default function PatientsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the patient record for {patientToDelete?.name}.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPatientToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!patientToDelete) return;
+                try {
+                  // First delete related visits
+                  const { error: visitsError } = await supabase
+                    .from("visits")
+                    .delete()
+                    .eq('patient_id', patientToDelete.id);
+
+                  if (visitsError) {
+                    console.error('Error deleting patient visits:', visitsError.message);
+                    toast({
+                      title: "Error",
+                      description: visitsError.message || "Failed to delete patient visits",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  // Then delete the patient
+                  const { error } = await supabase
+                    .from("patients")
+                    .delete()
+                    .eq('id', patientToDelete.id);
+
+                  if (error) {
+                    console.error('Error deleting patient:', error.message);
+                    toast({
+                      title: "Error",
+                      description: error.message || "Failed to delete patient record",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  // Update the local state to remove the deleted patient
+                  setPatients(patients.filter(p => p.id !== patientToDelete.id));
+                  setShowDeleteDialog(false);
+                  setPatientToDelete(null);
+                  
+                  toast({
+                    title: "Success",
+                    description: "Patient record deleted successfully",
+                    variant: "default",
+                  });
+                } catch (error: any) {
+                  console.error('Error deleting patient:', error.message || error);
+                  toast({
+                    title: "Error",
+                    description: error.message || "Failed to delete patient record",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-} 
+}

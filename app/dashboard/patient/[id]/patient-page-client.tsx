@@ -444,4 +444,4 @@ export function PatientPageClient({ id }: PatientPageClientProps) {
       </div>
     </div>
   )
-} 
+}

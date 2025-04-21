@@ -73,7 +73,7 @@ export function RecentPatients() {
         <PatientCard key={patient.id} patient={patient} onView={() => handleViewPatient(patient.id)} />
       ))}
       <div className="flex justify-center">
-        <Button variant="outline" onClick={() => router.push("/dashboard/patients")}>
+        <Button variant="outline" onClick={() => router.push("/patients")}>
           View All Patients
         </Button>
       </div>
