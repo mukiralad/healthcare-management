@@ -25,14 +25,15 @@ export function InventoryClient() {
   const [showAddMedicine, setShowAddMedicine] = useState(false)
   const [showTransfer, setShowTransfer] = useState(false)
   const [activeTab, setActiveTab] = useState<"master" | "pharmacy">("master")
-  const [searchTerm, setSearchTerm] = useState("")
+  const [masterSearchTerm, setMasterSearchTerm] = useState("")
+  const [pharmacySearchTerm, setPharmacySearchTerm] = useState("")
   
   const filteredMasterInventory = masterInventory.filter(medicine => 
-    medicine.medicine_name.toLowerCase().includes(searchTerm.toLowerCase())
+    medicine.medicine_name.toLowerCase().includes(masterSearchTerm.toLowerCase())
   )
   
   const filteredPharmacyInventory = pharmacyInventory.filter(medicine => 
-    medicine.medicine_name.toLowerCase().includes(searchTerm.toLowerCase())
+    medicine.medicine_name.toLowerCase().includes(pharmacySearchTerm.toLowerCase())
   )
   
   const supabase = createClient()
@@ -113,8 +114,8 @@ export function InventoryClient() {
                 <Input
                   placeholder="Search medicines..."
                   className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={masterSearchTerm}
+                  onChange={(e) => setMasterSearchTerm(e.target.value)}
                 />
               </div>
             </CardHeader>
@@ -137,8 +138,8 @@ export function InventoryClient() {
                 <Input
                   placeholder="Search medicines..."
                   className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={pharmacySearchTerm}
+                  onChange={(e) => setPharmacySearchTerm(e.target.value)}
                 />
               </div>
             </CardHeader>
