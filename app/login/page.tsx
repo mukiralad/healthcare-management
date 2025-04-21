@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -15,8 +15,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [loginAttempts, setLoginAttempts] = useState(0)
-  const [lastAttemptTime, setLastAttemptTime] = useState(0)
+  const loginAttemptsRef = useRef(0)
+  const lastAttemptTimeRef = useRef(0)
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -25,9 +25,20 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    // Add rate limiting
+    // Rate limiting check
     const now = Date.now()
-    if (now - lastAttemptTime < 2000) { // 2 seconds cooldown
+    const timeSinceLastAttempt = now - lastAttemptTimeRef.current
+    const COOLDOWN_PERIOD = 2000 // 2 seconds cooldown
+    const MAX_ATTEMPTS = 5
+    const RESET_PERIOD = 300000 // 5 minutes
+
+    // Reset attempts if enough time has passed
+    if (timeSinceLastAttempt > RESET_PERIOD) {
+      loginAttemptsRef.current = 0
+    }
+
+    // Check cooldown period
+    if (timeSinceLastAttempt < COOLDOWN_PERIOD) {
       toast({
         title: "Please wait",
         description: "Please wait a few seconds before trying again",
@@ -36,19 +47,22 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    setLastAttemptTime(now)
-    setLoginAttempts(prev => prev + 1)
 
-    if (loginAttempts >= 5) { // Reset after 5 attempts
+    // Check max attempts
+    if (loginAttemptsRef.current >= MAX_ATTEMPTS) {
+      const minutesLeft = Math.ceil((RESET_PERIOD - timeSinceLastAttempt) / 60000)
       toast({
         title: "Too many attempts",
-        description: "Please wait a few minutes before trying again",
+        description: `Please wait ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''} before trying again`,
         variant: "destructive",
       })
       setLoading(false)
       return
     }
 
+    // Update attempt tracking
+    loginAttemptsRef.current += 1
+    lastAttemptTimeRef.current = now
     try {
       if (!email || !password) {
         throw new Error("Please enter both email and password")
@@ -149,4 +163,3 @@ export default function LoginPage() {
     </div>
   )
 }
-
