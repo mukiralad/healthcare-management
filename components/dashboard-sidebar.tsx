@@ -35,7 +35,7 @@ export function DashboardSidebar() {
   const pathname = usePathname()
   
   return (
-    <div className="hidden border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 lg:block w-64 transition-all duration-300 ease-in-out">
+    <div className="border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-64 transition-all duration-300 ease-in-out">
       <ScrollArea className="h-[calc(100vh-4rem)]">
         <div className="flex flex-col gap-3 py-6 px-4">
           <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">MAIN MENU</p>
