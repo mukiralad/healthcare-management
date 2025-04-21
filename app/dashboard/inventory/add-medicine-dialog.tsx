@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -58,26 +59,57 @@ export function AddMedicineDialog({
     try {
       const table = inventoryType === "master" ? "master_inventory" : "pharmacy_inventory"
       
-      // Remove min_stock_level if this is master inventory
-      const dataToInsert = inventoryType === "master" 
-        ? {
-            medicine_name: values.medicine_name,
-            quantity: values.quantity,
-            unit: values.unit
-          }
-        : values
-      
-      const { error } = await supabase
+      // Check if medicine already exists
+      const { data: existingMedicine } = await supabase
         .from(table)
-        .insert(dataToInsert)
-        .select()
+        .select('*')
+        .eq('medicine_name', values.medicine_name)
+        .single()
 
-      if (error) {
-        console.error('Supabase error:', error)
-        form.setError('root', {
-          message: error.message || 'Failed to add medicine'
-        })
-        return
+      if (existingMedicine) {
+        // Update existing medicine quantity
+        const { error } = await supabase
+          .from(table)
+          .update({ 
+            quantity: existingMedicine.quantity + values.quantity,
+            unit: values.unit, // Update unit in case it needs to be changed
+            ...(inventoryType === 'pharmacy' && { min_stock_level: values.min_stock_level })
+          })
+          .eq('medicine_name', values.medicine_name)
+
+        if (error) {
+          console.error('Supabase error:', error)
+          const errorMessage = error.message || 'Failed to update medicine'
+          toast.error(`Failed to update ${values.medicine_name}: ${errorMessage}`)
+          form.setError('root', { message: errorMessage })
+          return
+        }
+
+        toast.success(`Updated quantity of ${values.medicine_name} in ${inventoryType} inventory`)
+      } else {
+        // Insert new medicine
+        const dataToInsert = inventoryType === "master" 
+          ? {
+              medicine_name: values.medicine_name,
+              quantity: values.quantity,
+              unit: values.unit
+            }
+          : values
+        
+        const { error } = await supabase
+          .from(table)
+          .insert(dataToInsert)
+          .select()
+
+        if (error) {
+          console.error('Supabase error:', error)
+          const errorMessage = error.message || 'Failed to add medicine'
+          toast.error(`Failed to add ${values.medicine_name}: ${errorMessage}`)
+          form.setError('root', { message: errorMessage })
+          return
+        }
+
+        toast.success(`${values.medicine_name} has been added to ${inventoryType} inventory`)
       }
 
       form.reset()
@@ -85,6 +117,7 @@ export function AddMedicineDialog({
       onOpenChange(false)
     } catch (err) {
       console.error('Unexpected error:', err)
+      toast.error(`Failed to add ${values.medicine_name}: An unexpected error occurred`)
       form.setError('root', {
         message: 'An unexpected error occurred'
       })

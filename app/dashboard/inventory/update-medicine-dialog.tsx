@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -86,8 +87,11 @@ export function UpdateMedicineDialog({
       .eq("id", medicine.id)
 
     if (!error) {
+      toast.success(`${values.medicine_name} has been updated successfully`)
       onSuccess()
       onOpenChange(false)
+    } else {
+      toast.error(`Failed to update ${values.medicine_name}: ${error.message}`)
     }
   }
 

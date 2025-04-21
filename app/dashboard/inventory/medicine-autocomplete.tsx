@@ -31,18 +31,29 @@ interface MedicineAutocompleteProps {
 export function MedicineAutocomplete({ onSelect }: MedicineAutocompleteProps) {
   const [open, setOpen] = React.useState(false)
   const [medicines, setMedicines] = React.useState<Medicine[]>([])
+  const [filteredMedicines, setFilteredMedicines] = React.useState<Medicine[]>([])
   const [value, setValue] = React.useState("")
   const supabase = createClient()
 
-  const fetchMedicines = async (searchTerm: string) => {
-    const { data } = await supabase
-      .from("master_inventory")
-      .select("id, medicine_name, unit")
-      .ilike("medicine_name", `${searchTerm}%`)
-      .order("medicine_name")
-      .limit(10)
+  React.useEffect(() => {
+    const fetchAllMedicines = async () => {
+      const { data } = await supabase
+        .from("master_inventory")
+        .select("id, medicine_name, unit")
+        .order("medicine_name")
+      
+      setMedicines(data || [])
+      setFilteredMedicines(data || [])
+    }
 
-    setMedicines(data || [])
+    fetchAllMedicines()
+  }, [])
+
+  const filterMedicines = (searchTerm: string) => {
+    const filtered = medicines.filter(medicine => 
+      medicine.medicine_name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredMedicines(filtered)
   }
 
   return (
@@ -62,13 +73,11 @@ export function MedicineAutocomplete({ onSelect }: MedicineAutocompleteProps) {
         <Command>
           <CommandInput 
             placeholder="Search medicines..." 
-            onValueChange={(search) => {
-              fetchMedicines(search)
-            }}
+            onValueChange={filterMedicines}
           />
           <CommandEmpty>No medicine found.</CommandEmpty>
-          <CommandGroup>
-            {medicines.map((medicine) => (
+          <CommandGroup className="max-h-[200px] overflow-y-auto">
+            {filteredMedicines.map((medicine) => (
               <CommandItem
                 key={medicine.id}
                 value={medicine.medicine_name}

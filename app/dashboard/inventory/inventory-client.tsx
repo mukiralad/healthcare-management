@@ -23,7 +23,7 @@ export function InventoryClient() {
   const [pharmacyInventory, setPharmacyInventory] = useState<Medicine[]>([])
   const [showAddMedicine, setShowAddMedicine] = useState(false)
   const [showTransfer, setShowTransfer] = useState(false)
-  const [activeTab, setActiveTab] = useState("master")
+  const [activeTab, setActiveTab] = useState<"master" | "pharmacy">("master")
   
   const supabase = createClient()
 
@@ -50,10 +50,10 @@ export function InventoryClient() {
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Inventory Management</h1>
-        <div className="space-x-2">
+        <div className="flex items-center space-x-3">
           <Button 
             onClick={() => setShowAddMedicine(true)}
-            className="gap-2"
+            className="flex items-center gap-2 h-10"
           >
             <Plus className="h-4 w-4" />
             Add Medicine
@@ -62,6 +62,7 @@ export function InventoryClient() {
             <Button 
               onClick={() => setShowTransfer(true)}
               variant="outline"
+              className="h-10"
             >
               Transfer to Pharmacy
             </Button>
@@ -69,7 +70,25 @@ export function InventoryClient() {
         </div>
       </div>
 
-      <Tabs defaultValue="master" onValueChange={setActiveTab}>
+      <AddMedicineDialog
+        open={showAddMedicine}
+        onOpenChange={setShowAddMedicine}
+        onSuccess={fetchInventory}
+        inventoryType={activeTab}
+      />
+
+      <TransferMedicineDialog
+        open={showTransfer}
+        onOpenChange={setShowTransfer}
+        onSuccess={fetchInventory}
+        masterInventory={masterInventory}
+      />
+
+      <Tabs defaultValue="master" onValueChange={(value) => {
+        if (value === "master" || value === "pharmacy") {
+          setActiveTab(value);
+        }
+      }}>
         <TabsList className="mb-4">
           <TabsTrigger value="master">Master Inventory</TabsTrigger>
           <TabsTrigger value="pharmacy">Pharmacy Inventory</TabsTrigger>

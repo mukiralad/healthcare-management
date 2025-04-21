@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,7 @@ export function TransferMedicineDialog({
     try {
       const selectedMedicine = masterInventory.find(m => m.id === values.medicine_id)
       if (!selectedMedicine) {
+        toast.error("Please select a valid medicine")
         form.setError("medicine_id", {
           message: "Please select a valid medicine",
         })
@@ -76,6 +78,7 @@ export function TransferMedicineDialog({
       }
 
       if (values.quantity > selectedMedicine.quantity) {
+        toast.error(`Transfer quantity cannot exceed available quantity (${selectedMedicine.quantity} ${selectedMedicine.unit})`)
         form.setError("quantity", {
           message: "Transfer quantity cannot exceed available quantity",
         })
@@ -92,6 +95,7 @@ export function TransferMedicineDialog({
 
       if (masterError) {
         console.error("Master inventory update error:", masterError)
+        toast.error(`Failed to update master inventory: ${masterError.message}`)
         form.setError("root", {
           message: "Failed to update master inventory",
         })
@@ -168,6 +172,7 @@ export function TransferMedicineDialog({
         }
       }
 
+      toast.success(`Successfully transferred ${values.quantity} ${selectedMedicine.unit} of ${selectedMedicine.medicine_name} to pharmacy`)
       form.reset()
       onSuccess()
       onOpenChange(false)
