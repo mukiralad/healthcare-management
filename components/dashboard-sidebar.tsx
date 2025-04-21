@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { FileText, Home, Users } from "lucide-react"
+import { Home, Users, Pill } from "lucide-react"
 
 export function DashboardSidebar() {
   const pathname = usePathname()
@@ -32,15 +32,16 @@ export function DashboardSidebar() {
               Patients
             </Button>
           </Link>
-          <Link href="/dashboard" passHref>
+          <Link href="/dashboard/inventory" passHref>
             <Button 
-              variant="ghost" 
+              variant={pathname.startsWith("/dashboard/inventory") ? "default" : "ghost"}
               className="w-full justify-start gap-3 h-10"
             >
-              <FileText className="h-4 w-4" />
-              Reports
+              <Pill className="h-4 w-4" />
+              Inventory
             </Button>
           </Link>
+
         </div>
       </ScrollArea>
     </div>
