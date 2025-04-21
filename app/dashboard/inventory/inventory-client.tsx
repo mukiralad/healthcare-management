@@ -154,19 +154,6 @@ export function InventoryClient() {
         </TabsContent>
       </Tabs>
 
-      <AddMedicineDialog 
-        open={showAddMedicine}
-        onOpenChange={setShowAddMedicine}
-        onSuccess={fetchInventory}
-        inventoryType={activeTab}
-      />
-
-      <TransferMedicineDialog
-        open={showTransfer}
-        onOpenChange={setShowTransfer}
-        onSuccess={fetchInventory}
-        masterInventory={masterInventory}
-      />
     </div>
   )
 }

@@ -82,10 +82,13 @@ export function UpdateMedicineDialog({
     const table = showMinStock ? "pharmacy_inventory" : "master_inventory"
     
     // Remove min_stock_level from values if updating master inventory
-    const updateValues = !showMinStock ? values : {
+    const updateValues = !showMinStock ? {
+      medicine_name: values.medicine_name,
+      quantity: values.quantity
+    } : {
       medicine_name: values.medicine_name,
       quantity: values.quantity,
-
+      min_stock_level: Number(values.min_stock_level)
     }
 
     const { error } = await supabase
