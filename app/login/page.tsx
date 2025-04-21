@@ -12,9 +12,11 @@ import { LandingHeader } from "@/components/landing-header"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [loginAttempts, setLoginAttempts] = useState(0)
+  const [lastAttemptTime, setLastAttemptTime] = useState(0)
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -23,7 +25,34 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    // Add rate limiting
+    const now = Date.now()
+    if (now - lastAttemptTime < 2000) { // 2 seconds cooldown
+      toast({
+        title: "Please wait",
+        description: "Please wait a few seconds before trying again",
+        variant: "destructive",
+      })
+      setLoading(false)
+      return
+    }
+    setLastAttemptTime(now)
+    setLoginAttempts(prev => prev + 1)
+
+    if (loginAttempts >= 5) { // Reset after 5 attempts
+      toast({
+        title: "Too many attempts",
+        description: "Please wait a few minutes before trying again",
+        variant: "destructive",
+      })
+      setLoading(false)
+      return
+    }
+
     try {
+      if (!email || !password) {
+        throw new Error("Please enter both email and password")
+      }
       console.log("Attempting login with email:", `${email}@healthcare.local`)
       const { data, error } = await supabase.auth.signInWithPassword({
         email: `${email}@healthcare.local`,
@@ -32,7 +61,25 @@ export default function LoginPage() {
 
       if (error) {
         console.error("Supabase auth error:", error)
-        throw error
+        let errorMessage = "Authentication failed"
+        
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid username or password"
+        } else if (error.message.includes("rate limit")) {
+          errorMessage = "Too many login attempts. Please wait a few minutes."
+        } else if (error.message.includes("Refresh Token")) {
+          errorMessage = "Session expired. Please try again."
+          // Clear any stale session data
+          await supabase.auth.signOut()
+        }
+        
+        toast({
+          title: "Login Failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        setLoading(false)
+        return
       }
 
       if (!data?.user) {
