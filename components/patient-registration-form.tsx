@@ -158,7 +158,7 @@ export function PatientRegistrationForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Dr. P. Indrasen Reddy">Dr. P. Indrasen Reddy</SelectItem>
-                  <SelectItem value="Dr. Seetha Reddy">Dr. Seetha Reddy</SelectItem>
+                  <SelectItem value="Dr. Chandana Reddy">Dr. Chandana Reddy</SelectItem>
                 </SelectContent>
               </Select>
             </div>

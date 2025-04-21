@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { QuantityInput } from "@/components/ui/quantity-input"
 import { createClient } from "@/lib/supabase/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect } from "react"
@@ -82,10 +83,13 @@ export function UpdateMedicineDialog({
     const table = showMinStock ? "pharmacy_inventory" : "master_inventory"
     
     // Remove min_stock_level from values if updating master inventory
-    const updateValues = !showMinStock ? values : {
+    const updateValues = !showMinStock ? {
+      medicine_name: values.medicine_name,
+      quantity: values.quantity
+    } : {
       medicine_name: values.medicine_name,
       quantity: values.quantity,
-
+      min_stock_level: Number(values.min_stock_level)
     }
 
     const { error } = await supabase
@@ -134,10 +138,9 @@ export function UpdateMedicineDialog({
                 <FormItem>
                   <FormLabel>Quantity</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field} 
-                      onChange={e => field.onChange(Number(e.target.value))}
+                    <QuantityInput 
+                      {...field}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -154,10 +157,9 @@ export function UpdateMedicineDialog({
                   <FormItem>
                     <FormLabel>Minimum Stock Level</FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        onChange={e => field.onChange(Number(e.target.value))}
+                      <QuantityInput 
+                        {...field}
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />

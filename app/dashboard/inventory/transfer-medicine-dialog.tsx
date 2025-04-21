@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { QuantityInput } from "@/components/ui/quantity-input"
 import {
   Select,
   SelectContent,
@@ -237,10 +238,9 @@ export function TransferMedicineDialog({
                 <FormItem>
                   <FormLabel>Transfer Quantity</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number"
+                    <QuantityInput 
                       {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   {selectedMedicine && (
@@ -260,10 +260,9 @@ export function TransferMedicineDialog({
                 <FormItem>
                   <FormLabel>Minimum Stock Level</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number"
+                    <QuantityInput 
                       {...field}
-                      onChange={e => field.onChange(Number(e.target.value))}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />

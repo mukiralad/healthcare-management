@@ -17,7 +17,7 @@ const formSchema = z.object({
   principal_diagnosis: z.string().optional(),
   presenting_complaints: z.string().optional(),
   follow_up_advice: z.string().optional(),
-  doctor_name: z.enum(["Dr. P. Indrasen Reddy", "Dr. Seetha Reddy"], {
+  doctor_name: z.enum(["Dr. P. Indrasen Reddy", "Dr. Chandana Reddy"], {
     required_error: "Please select the consulting doctor.",
   }),
   _temperature: z.string().optional(),
@@ -120,7 +120,7 @@ export function NewVisitForm({ patientId }: NewVisitFormProps) {
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="Dr. P. Indrasen Reddy">Dr. P. Indrasen Reddy</SelectItem>
-                    <SelectItem value="Dr. Seetha Reddy">Dr. Seetha Reddy</SelectItem>
+                    <SelectItem value="Dr. Chandana Reddy">Dr. Chandana Reddy</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
