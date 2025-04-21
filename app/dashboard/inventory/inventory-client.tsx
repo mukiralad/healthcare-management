@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/client"
-import { Plus } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import { useEffect, useState } from "react"
 import { AddMedicineDialog } from "./add-medicine-dialog"
 import { TransferMedicineDialog } from "./transfer-medicine-dialog"
 import { MedicineTable } from "./medicine-table"
+import { Input } from "@/components/ui/input"
 
 type Medicine = {
   id: string
@@ -24,6 +25,15 @@ export function InventoryClient() {
   const [showAddMedicine, setShowAddMedicine] = useState(false)
   const [showTransfer, setShowTransfer] = useState(false)
   const [activeTab, setActiveTab] = useState<"master" | "pharmacy">("master")
+  const [searchTerm, setSearchTerm] = useState("")
+  
+  const filteredMasterInventory = masterInventory.filter(medicine => 
+    medicine.medicine_name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+  
+  const filteredPharmacyInventory = pharmacyInventory.filter(medicine => 
+    medicine.medicine_name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
   
   const supabase = createClient()
 
@@ -98,10 +108,19 @@ export function InventoryClient() {
           <Card>
             <CardHeader>
               <CardTitle>Master Room Inventory</CardTitle>
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search medicines..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <MedicineTable 
-                medicines={masterInventory}
+                medicines={filteredMasterInventory}
                 showMinStock={false}
                 onUpdate={fetchInventory}
               />
@@ -113,10 +132,19 @@ export function InventoryClient() {
           <Card>
             <CardHeader>
               <CardTitle>Pharmacy Room Inventory</CardTitle>
+              <div className="relative w-full max-w-sm">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search medicines..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <MedicineTable 
-                medicines={pharmacyInventory}
+                medicines={filteredPharmacyInventory}
                 showMinStock={true}
                 onUpdate={fetchInventory}
               />

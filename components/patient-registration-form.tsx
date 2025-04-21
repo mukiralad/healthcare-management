@@ -107,9 +107,9 @@ export function PatientRegistrationForm() {
           patient_id: data[0].id,
           visit_date: new Date().toISOString(),
           doctor_name: selectedDoctor,
-          presenting_complaints: "Initial registration visit",
-          principal_diagnosis: "Registration checkup",
-          follow_up_advice: "Patient registered with PJTAU Health Centre"
+          presenting_complaints: "",
+          principal_diagnosis: "",
+          follow_up_advice: ""
         }
 
         const { error: visitError } = await supabase
@@ -305,22 +305,11 @@ export function PatientRegistrationForm() {
               <Button 
                 className="w-full"
                 onClick={() => {
-                  router.push(`/dashboard/patient/${registeredPatientId}?print=true`)
+                  router.push(`/dashboard/patient/${registeredPatientId}`)
                   setShowSuccessDialog(false)
                 }}
               >
-                <Printer className="mr-2 h-4 w-4" />
-                Print OP Form
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => {
-                  router.push("/dashboard/patients")
-                  setShowSuccessDialog(false)
-                }}
-              >
-                View All Patients
+                View Patient Profile
               </Button>
             </div>
           </div>

@@ -73,7 +73,7 @@ export function ReviewOpForm({ patient, visit, previousVisit }: ReviewOpFormProp
           </div>
           <div className="text-center">
             <h2 className="text-xl font-bold text-[#0096c7]">PJTAU HEALTH CENTRE</h2>
-            <p className="text-sm">Professor Jayashankar Telangana State Agricultural University</p>
+            <p className="text-sm">Professor Jayashankar Telangana Agricultural University</p>
             <p className="text-sm">Rajendranagar, Hyderabad - 500030</p>
           </div>
         </div>
@@ -172,8 +172,8 @@ export function ReviewOpForm({ patient, visit, previousVisit }: ReviewOpFormProp
       {/* Footer (Signature, Address) */}
       <div className="mt-8 flex justify-end">
         <div className="text-center">
-          <div className="border-t border-black pt-2 w-40">
-            <p className="font-medium">{visit?.doctor_name}</p>
+          <div className="border-t border-black pt-2 min-w-[200px]">
+            <p className="font-medium whitespace-nowrap">{visit?.doctor_name}</p>
           </div>
         </div>
       </div>
