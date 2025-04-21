@@ -40,7 +40,9 @@ type Medicine = {
   id: string
   medicine_name: string
   quantity: number
-
+  category: 'TDSR' | 'PDSR'
+  location?: string
+  stock_book_page_number: string
 }
 
 type TransferMedicineDialogProps = {
@@ -130,7 +132,10 @@ export function TransferMedicineDialog({
           .from("pharmacy_inventory")
           .update({ 
             quantity: existingPharmacy.quantity + values.quantity,
-            min_stock_level: values.min_stock_level
+            min_stock_level: values.min_stock_level,
+            category: selectedMedicine.category,
+            location: selectedMedicine.location,
+            stock_book_page_number: selectedMedicine.stock_book_page_number
           })
           .eq("id", existingPharmacy.id)
 
@@ -154,7 +159,9 @@ export function TransferMedicineDialog({
           .insert({
             medicine_name: selectedMedicine.medicine_name,
             quantity: values.quantity,
-
+            category: selectedMedicine.category,
+            location: selectedMedicine.location,
+            stock_book_page_number: selectedMedicine.stock_book_page_number,
             min_stock_level: values.min_stock_level
           })
 

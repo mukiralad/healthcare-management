@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
@@ -12,9 +12,11 @@ import { LandingHeader } from "@/components/landing-header"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin")
+  const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const loginAttemptsRef = useRef(0)
+  const lastAttemptTimeRef = useRef(0)
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClientComponentClient()
@@ -23,7 +25,48 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
+    // Rate limiting check
+    const now = Date.now()
+    const timeSinceLastAttempt = now - lastAttemptTimeRef.current
+    const COOLDOWN_PERIOD = 2000 // 2 seconds cooldown
+    const MAX_ATTEMPTS = 5
+    const RESET_PERIOD = 300000 // 5 minutes
+
+    // Reset attempts if enough time has passed
+    if (timeSinceLastAttempt > RESET_PERIOD) {
+      loginAttemptsRef.current = 0
+    }
+
+    // Check cooldown period
+    if (timeSinceLastAttempt < COOLDOWN_PERIOD) {
+      toast({
+        title: "Please wait",
+        description: "Please wait a few seconds before trying again",
+        variant: "destructive",
+      })
+      setLoading(false)
+      return
+    }
+
+    // Check max attempts
+    if (loginAttemptsRef.current >= MAX_ATTEMPTS) {
+      const minutesLeft = Math.ceil((RESET_PERIOD - timeSinceLastAttempt) / 60000)
+      toast({
+        title: "Too many attempts",
+        description: `Please wait ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''} before trying again`,
+        variant: "destructive",
+      })
+      setLoading(false)
+      return
+    }
+
+    // Update attempt tracking
+    loginAttemptsRef.current += 1
+    lastAttemptTimeRef.current = now
     try {
+      if (!email || !password) {
+        throw new Error("Please enter both email and password")
+      }
       console.log("Attempting login with email:", `${email}@healthcare.local`)
       const { data, error } = await supabase.auth.signInWithPassword({
         email: `${email}@healthcare.local`,
@@ -32,7 +75,25 @@ export default function LoginPage() {
 
       if (error) {
         console.error("Supabase auth error:", error)
-        throw error
+        let errorMessage = "Authentication failed"
+        
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid username or password"
+        } else if (error.message.includes("rate limit")) {
+          errorMessage = "Too many login attempts. Please wait a few minutes."
+        } else if (error.message.includes("Refresh Token")) {
+          errorMessage = "Session expired. Please try again."
+          // Clear any stale session data
+          await supabase.auth.signOut()
+        }
+        
+        toast({
+          title: "Login Failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        setLoading(false)
+        return
       }
 
       if (!data?.user) {
@@ -102,4 +163,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

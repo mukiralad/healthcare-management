@@ -19,7 +19,7 @@ const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  gender: z.enum(["Male", "Female", "Other"], {
+  gender: z.enum(["Male", "Female"], {
     required_error: "Please select a gender.",
   }),
   age: z.coerce
@@ -29,9 +29,7 @@ const formSchema = z.object({
     })
     .transform((val) => (isNaN(val) ? undefined : val))
     .pipe(z.number().min(1, { message: "Age must be at least 1 year." })),
-  id_number: z.string().min(1, {
-    message: "ID number is required.",
-  }),
+  id_number: z.string().optional().or(z.literal("")),
   phone_number: z
     .string()
     .length(10, {
@@ -61,12 +59,14 @@ export function PatientRegistrationForm() {
   const { toast } = useToast()
   const supabase = createClientComponentClient()
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  type FormValues = z.infer<typeof formSchema>
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      gender: undefined,
-      age: "",
+      gender: "Male" as "Male" | "Female",
+      age: 0,
       id_number: "",
       phone_number: "",
       email: "",
@@ -192,7 +192,6 @@ export function PatientRegistrationForm() {
                     <SelectContent>
                       <SelectItem value="Male">Male</SelectItem>
                       <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -219,7 +218,7 @@ export function PatientRegistrationForm() {
               name="id_number"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>ID Number</FormLabel>
+                  <FormLabel>ID Number (Optional)</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

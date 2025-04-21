@@ -28,6 +28,9 @@ type Medicine = {
   id: string
   medicine_name: string
   quantity: number
+  category: 'TDSR' | 'PDSR'
+  location?: string
+  stock_book_page_number: string
   min_stock_level?: number
 }
 
@@ -49,8 +52,10 @@ export function MedicineTable({ medicines, showMinStock, onUpdate }: MedicineTab
         <TableHeader>
           <TableRow>
             <TableHead>Medicine Name</TableHead>
+            <TableHead>Category</TableHead>
             <TableHead>Quantity</TableHead>
-
+            <TableHead>Location</TableHead>
+            <TableHead>Stock Book Page</TableHead>
             {showMinStock && <TableHead>Min Stock Level</TableHead>}
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
@@ -59,6 +64,7 @@ export function MedicineTable({ medicines, showMinStock, onUpdate }: MedicineTab
           {medicines.map((medicine) => (
             <TableRow key={medicine.id}>
               <TableCell className="align-middle">{medicine.medicine_name}</TableCell>
+              <TableCell className="align-middle">{medicine.category}</TableCell>
               <TableCell className="align-middle">
                 <div className="flex items-center gap-2">
                   {medicine.quantity}
@@ -69,7 +75,8 @@ export function MedicineTable({ medicines, showMinStock, onUpdate }: MedicineTab
                   )}
                 </div>
               </TableCell>
-
+              <TableCell className="align-middle">{medicine.location || '-'}</TableCell>
+              <TableCell className="align-middle">{medicine.stock_book_page_number}</TableCell>
               {showMinStock && (
                 <TableCell>{medicine.min_stock_level}</TableCell>
               )}

@@ -15,7 +15,7 @@ const formSchema = z.object({
   name: z.string().min(2, {
     message: "Name must be at least 2 characters.",
   }),
-  gender: z.enum(["Male", "Female", "Other"], {
+  gender: z.enum(["Male", "Female"], {
     required_error: "Please select a gender.",
   }),
   age: z.coerce
@@ -25,9 +25,7 @@ const formSchema = z.object({
     })
     .transform((val) => (isNaN(val) ? undefined : val))
     .pipe(z.number().min(1, { message: "Age must be at least 1 year." })),
-  id_number: z.string().min(1, {
-    message: "ID number is required.",
-  }),
+  id_number: z.string().optional().or(z.literal("")),
   phone_number: z
     .string()
     .length(10, {
@@ -72,7 +70,7 @@ export function PatientEditForm({ patient, onSuccess, onCancel }: PatientEditFor
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: patient.name,
-      gender: patient.gender as "Male" | "Female" | "Other",
+      gender: patient.gender as "Male" | "Female",
       age: patient.age,
       id_number: patient.id_number,
       phone_number: patient.phone_number,
@@ -172,7 +170,6 @@ export function PatientEditForm({ patient, onSuccess, onCancel }: PatientEditFor
                   <SelectContent>
                     <SelectItem value="Male">Male</SelectItem>
                     <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -199,7 +196,7 @@ export function PatientEditForm({ patient, onSuccess, onCancel }: PatientEditFor
             name="id_number"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>ID Number</FormLabel>
+                <FormLabel>ID Number (Optional)</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
