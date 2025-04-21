@@ -26,7 +26,7 @@ import { MedicineAutocomplete } from "./medicine-autocomplete"
 const formSchema = z.object({
   medicine_name: z.string().min(1, "Medicine name is required"),
   quantity: z.number().min(0, "Quantity must be 0 or greater"),
-  unit: z.string().min(1, "Unit is required"),
+
   min_stock_level: z.number().min(0, "Minimum stock level must be 0 or greater").optional(),
 })
 
@@ -48,7 +48,7 @@ export function AddMedicineDialog({
     defaultValues: {
       medicine_name: "",
       quantity: 0,
-      unit: "",
+
       min_stock_level: 0,
     },
   })
@@ -72,7 +72,7 @@ export function AddMedicineDialog({
           .from(table)
           .update({ 
             quantity: existingMedicine.quantity + values.quantity,
-            unit: values.unit, // Update unit in case it needs to be changed
+
             ...(inventoryType === 'pharmacy' && { min_stock_level: values.min_stock_level })
           })
           .eq('medicine_name', values.medicine_name)
@@ -92,7 +92,7 @@ export function AddMedicineDialog({
           ? {
               medicine_name: values.medicine_name,
               quantity: values.quantity,
-              unit: values.unit
+
             }
           : values
         
@@ -145,7 +145,7 @@ export function AddMedicineDialog({
                       <MedicineAutocomplete
                         onSelect={(medicine) => {
                           form.setValue("medicine_name", medicine.medicine_name)
-                          form.setValue("unit", medicine.unit)
+
                         }}
                       />
                     </FormControl>
@@ -177,19 +177,6 @@ export function AddMedicineDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="unit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Unit</FormLabel>
-                  <FormControl>
-                    <Input {...field} disabled={inventoryType === "pharmacy"} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {inventoryType === "pharmacy" && (
               <FormField

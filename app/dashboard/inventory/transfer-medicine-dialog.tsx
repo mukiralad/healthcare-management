@@ -39,7 +39,7 @@ type Medicine = {
   id: string
   medicine_name: string
   quantity: number
-  unit: string
+
 }
 
 type TransferMedicineDialogProps = {
@@ -78,7 +78,7 @@ export function TransferMedicineDialog({
       }
 
       if (values.quantity > selectedMedicine.quantity) {
-        toast.error(`Transfer quantity cannot exceed available quantity (${selectedMedicine.quantity} ${selectedMedicine.unit})`)
+        toast.error(`Transfer quantity cannot exceed available quantity (${selectedMedicine.quantity})`)
         form.setError("quantity", {
           message: "Transfer quantity cannot exceed available quantity",
         })
@@ -153,7 +153,7 @@ export function TransferMedicineDialog({
           .insert({
             medicine_name: selectedMedicine.medicine_name,
             quantity: values.quantity,
-            unit: selectedMedicine.unit,
+
             min_stock_level: values.min_stock_level
           })
 
@@ -172,7 +172,7 @@ export function TransferMedicineDialog({
         }
       }
 
-      toast.success(`Successfully transferred ${values.quantity} ${selectedMedicine.unit} of ${selectedMedicine.medicine_name} to pharmacy`)
+      toast.success(`Successfully transferred ${values.quantity} of ${selectedMedicine.medicine_name} to pharmacy`)
       form.reset()
       onSuccess()
       onOpenChange(false)
@@ -220,7 +220,7 @@ export function TransferMedicineDialog({
                     <SelectContent>
                       {masterInventory.map((medicine) => (
                         <SelectItem key={medicine.id} value={medicine.id}>
-                          {medicine.medicine_name} ({medicine.quantity} {medicine.unit})
+                          {medicine.medicine_name} ({medicine.quantity})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -245,7 +245,7 @@ export function TransferMedicineDialog({
                   </FormControl>
                   {selectedMedicine && (
                     <p className="text-sm text-muted-foreground">
-                      Available: {selectedMedicine.quantity} {selectedMedicine.unit}
+                      Available: {selectedMedicine.quantity}
                     </p>
                   )}
                   <FormMessage />

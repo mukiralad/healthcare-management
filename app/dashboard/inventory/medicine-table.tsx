@@ -28,7 +28,6 @@ type Medicine = {
   id: string
   medicine_name: string
   quantity: number
-  unit: string
   min_stock_level?: number
 }
 
@@ -51,7 +50,7 @@ export function MedicineTable({ medicines, showMinStock, onUpdate }: MedicineTab
           <TableRow>
             <TableHead>Medicine Name</TableHead>
             <TableHead>Quantity</TableHead>
-            <TableHead>Unit</TableHead>
+
             {showMinStock && <TableHead>Min Stock Level</TableHead>}
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
@@ -70,7 +69,7 @@ export function MedicineTable({ medicines, showMinStock, onUpdate }: MedicineTab
                   )}
                 </div>
               </TableCell>
-              <TableCell className="align-middle">{medicine.unit}</TableCell>
+
               {showMinStock && (
                 <TableCell>{medicine.min_stock_level}</TableCell>
               )}
