@@ -1,0 +1,326 @@
+"use client"
+
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { CalendarIcon, Plus, Trash2 } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+
+interface PurchaseItem {
+  medicine_name: string
+  batch_number: string
+  expiry_date: Date | null
+  quantity: number | null
+  unit_price: number | null
+  total_price: number | null
+}
+
+interface NewPurchaseDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess: () => void
+}
+
+export function NewPurchaseDialog({ open, onOpenChange, onSuccess }: NewPurchaseDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [purchaseDate, setPurchaseDate] = useState<Date | null>(new Date())
+  const [items, setItems] = useState<PurchaseItem[]>([{
+    medicine_name: "",
+    batch_number: "",
+    expiry_date: null,
+    quantity: null,
+    unit_price: null,
+    total_price: null
+  }])
+
+  const [formData, setFormData] = useState({
+    invoice_number: "",
+    supplier_name: "",
+    notes: ""
+  })
+
+  const addItem = () => {
+    setItems([...items, {
+      medicine_name: "",
+      batch_number: "",
+      expiry_date: null,
+      quantity: null,
+      unit_price: null,
+      total_price: null
+    }])
+  }
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index))
+  }
+
+  const updateItem = (index: number, field: keyof PurchaseItem, value: any) => {
+    const newItems = [...items]
+    newItems[index] = {
+      ...newItems[index],
+      [field]: value
+    }
+    setItems(newItems)
+  }
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true)
+      const supabase = createClient()
+
+      // Calculate total amount
+      const total_amount = items.reduce((sum, item) => sum + (item.total_price || 0), 0)
+
+      // Insert purchase record
+      const { data: purchase, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert({
+          invoice_number: formData.invoice_number,
+          supplier_name: formData.supplier_name,
+          purchase_date: purchaseDate?.toISOString(),
+          total_amount,
+          notes: formData.notes
+        })
+        .select()
+        .single()
+
+      if (purchaseError) throw purchaseError
+
+      // Insert purchase items
+      const { error: itemsError } = await supabase
+        .from("purchase_items")
+        .insert(
+          items.map(item => ({
+            purchase_id: purchase.id,
+            medicine_name: item.medicine_name,
+            batch_number: item.batch_number,
+            expiry_date: item.expiry_date?.toISOString(),
+            quantity: item.quantity,
+            unit_price: item.unit_price,
+            total_price: item.total_price
+          }))
+        )
+
+      if (itemsError) throw itemsError
+
+      onSuccess()
+      resetForm()
+    } catch (error) {
+      console.error("Error creating purchase:", error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      invoice_number: "",
+      supplier_name: "",
+      notes: ""
+    })
+    setPurchaseDate(new Date())
+    setItems([{
+      medicine_name: "",
+      batch_number: "",
+      expiry_date: null,
+      quantity: null,
+      unit_price: null,
+      total_price: null
+    }])
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>New Purchase</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="invoice_number">Invoice Number</Label>
+              <Input
+                id="invoice_number"
+                value={formData.invoice_number}
+                onChange={(e) => setFormData(prev => ({ ...prev, invoice_number: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supplier_name">Supplier Name</Label>
+              <Input
+                id="supplier_name"
+                value={formData.supplier_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, supplier_name: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Purchase Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !purchaseDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {purchaseDate ? format(purchaseDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={purchaseDate || undefined}
+                    onSelect={(date) => date ? setPurchaseDate(date) : null}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h4 className="text-sm font-medium">Items</h4>
+              <Button onClick={addItem} variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" /> Add Item
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {items.map((item, index) => (
+                <div key={index} className="grid grid-cols-1 gap-6 bg-muted/30 p-6 rounded-xl shadow-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Medicine Name</Label>
+                      <Input
+                        placeholder="Enter medicine name"
+                        value={item.medicine_name}
+                        onChange={(e) => updateItem(index, "medicine_name", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Batch Number</Label>
+                      <Input
+                        placeholder="Enter batch number"
+                        value={item.batch_number}
+                        onChange={(e) => updateItem(index, "batch_number", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Expiry Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !item.expiry_date && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {item.expiry_date ? format(item.expiry_date, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar
+                            mode="single"
+                            selected={item.expiry_date || undefined}
+                            onSelect={(date) => date ? updateItem(index, "expiry_date", date) : null}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Quantity</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter quantity"
+                        value={item.quantity || ""}
+                        onChange={(e) => {
+                          const qty = parseFloat(e.target.value)
+                          updateItem(index, "quantity", qty)
+                          if (item.total_price !== null && qty !== null) {
+                            updateItem(index, "unit_price", item.total_price / qty)
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total Price</Label>
+                      <Input
+                        type="number"
+                        placeholder="Enter total price"
+                        value={item.total_price || ""}
+                        onChange={(e) => {
+                          const total = parseFloat(e.target.value)
+                          updateItem(index, "total_price", total)
+                          if (item.quantity !== null && total !== null) {
+                            updateItem(index, "unit_price", total / item.quantity)
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Unit Price (Auto)</Label>
+                      <Input
+                        type="number"
+                        value={item.unit_price ? item.unit_price.toFixed(2) : ""}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:bg-destructive/10"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Notes</Label>
+            <Input
+              id="notes"
+              value={formData.notes}
+              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Purchase"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
