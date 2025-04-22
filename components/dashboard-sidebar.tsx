@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Home, Users, Pill } from "lucide-react"
+import { Home, Users, Pill, ArrowLeftRight, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface NavLinkProps {
@@ -42,6 +42,8 @@ export function DashboardSidebar() {
           <NavLink href="/dashboard" icon={<Home className="h-4 w-4" />} isActive={pathname === "/dashboard"}>Dashboard</NavLink>
           <NavLink href="/patients" icon={<Users className="h-4 w-4" />} isActive={pathname.startsWith("/patients")}>Patients</NavLink>
           <NavLink href="/dashboard/inventory" icon={<Pill className="h-4 w-4" />} isActive={pathname.startsWith("/dashboard/inventory")}>Inventory</NavLink>
+          <NavLink href="/dashboard/transfers" icon={<ArrowLeftRight className="h-4 w-4" />} isActive={pathname.startsWith("/dashboard/transfers")}>Transfers</NavLink>
+          <NavLink href="/dashboard/purchases" icon={<Receipt className="h-4 w-4" />} isActive={pathname.startsWith("/dashboard/purchases")}>Purchases</NavLink>
 
         </div>
       </ScrollArea>

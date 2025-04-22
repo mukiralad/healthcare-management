@@ -34,6 +34,8 @@ const formSchema = z.object({
   medicine_id: z.string().min(1, "Please select a medicine"),
   quantity: z.number().min(1, "Quantity must be greater than 0"),
   min_stock_level: z.number().min(0, "Minimum stock level must be 0 or greater"),
+  issuer: z.string().min(1, "Issuer is required"),
+  receiver: z.string().min(1, "Receiver is required")
 })
 
 type Medicine = {
@@ -64,6 +66,8 @@ export function TransferMedicineDialog({
       medicine_id: "",
       quantity: 0,
       min_stock_level: 0,
+      issuer: "",
+      receiver: ""
     },
   })
 
@@ -88,7 +92,28 @@ export function TransferMedicineDialog({
         return
       }
 
-      // 1. Reduce quantity in master inventory
+      // 1. Create transfer record
+      const { error: transferError } = await supabase
+        .from("transfers")
+        .insert({
+          medicine_name: selectedMedicine.medicine_name,
+          quantity: values.quantity,
+          from_inventory: "master",
+          to_inventory: "pharmacy",
+          issuer: values.issuer,
+          receiver: values.receiver
+        })
+
+      if (transferError) {
+        console.error("Transfer record creation error:", transferError)
+        toast.error(`Failed to create transfer record: ${transferError.message}`)
+        form.setError("root", {
+          message: "Failed to create transfer record",
+        })
+        return
+      }
+
+      // 2. Reduce quantity in master inventory
       const { error: masterError } = await supabase
         .from("master_inventory")
         .update({ 
@@ -98,6 +123,13 @@ export function TransferMedicineDialog({
 
       if (masterError) {
         console.error("Master inventory update error:", masterError)
+        // Rollback transfer record
+        await supabase
+          .from("transfers")
+          .delete()
+          .eq("medicine_name", selectedMedicine.medicine_name)
+          .eq("transfer_date", new Date().toISOString())
+
         toast.error(`Failed to update master inventory: ${masterError.message}`)
         form.setError("root", {
           message: "Failed to update master inventory",
@@ -162,7 +194,9 @@ export function TransferMedicineDialog({
             category: selectedMedicine.category,
             location: selectedMedicine.location,
             stock_book_page_number: selectedMedicine.stock_book_page_number,
-            min_stock_level: values.min_stock_level
+            min_stock_level: values.min_stock_level,
+            issuer: values.issuer,
+            receiver: values.receiver
           })
 
         if (pharmacyError) {
@@ -271,6 +305,34 @@ export function TransferMedicineDialog({
                       {...field}
                       onChange={field.onChange}
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="issuer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Issuer</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter issuer name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="receiver"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Receiver</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter receiver name" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -15,8 +15,9 @@ type Medicine = {
   id: string
   medicine_name: string
   quantity: number
-  unit: string
-  min_stock_level?: number
+  category: 'TDSR' | 'PDSR'
+  location?: string
+  stock_book_page_number: string
 }
 
 export function InventoryClient() {
@@ -62,21 +63,23 @@ export function InventoryClient() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Inventory Management</h1>
         <div className="flex items-center space-x-3">
-          <Button 
-            onClick={() => setShowAddMedicine(true)}
-            className="flex items-center gap-2 h-10"
-          >
-            <Plus className="h-4 w-4" />
-            Add Medicine
-          </Button>
           {activeTab === "master" && (
-            <Button 
-              onClick={() => setShowTransfer(true)}
-              variant="outline"
-              className="h-10"
-            >
-              Transfer to Pharmacy
-            </Button>
+            <>
+              <Button 
+                onClick={() => setShowAddMedicine(true)}
+                className="flex items-center gap-2 h-10"
+              >
+                <Plus className="h-4 w-4" />
+                Add Medicine
+              </Button>
+              <Button 
+                onClick={() => setShowTransfer(true)}
+                variant="outline"
+                className="h-10"
+              >
+                Transfer to Pharmacy
+              </Button>
+            </>
           )}
         </div>
       </div>
