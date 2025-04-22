@@ -3,6 +3,10 @@
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Pencil, Trash2 } from "lucide-react"
+import { toast } from "sonner"
+import { EditTransferDialog } from "./edit-transfer-dialog"
 import {
   Select,
   SelectContent,
@@ -19,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { format } from "date-fns"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 type Transfer = {
   id: string
@@ -46,7 +50,33 @@ type TransferStats = {
 
 export default function TransfersPage() {
   const supabase = createClient()
+  const queryClient = useQueryClient()
   const [timeRange, setTimeRange] = useState("all")
+  const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  const handleEditTransfer = (transfer: Transfer) => {
+    setSelectedTransfer(transfer)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleDeleteTransfer = async (transferId: string) => {
+    try {
+      const { error } = await supabase
+        .from('transfers')
+        .delete()
+        .eq('id', transferId)
+
+      if (error) throw error
+
+      // Invalidate and refetch all transfer-related queries
+      await queryClient.invalidateQueries({ queryKey: ['transfers'] })
+      toast.success('Transfer deleted successfully')
+    } catch (error) {
+      console.error('Error deleting transfer:', error)
+      toast.error('Failed to delete transfer')
+    }
+  }
 
   const getTimeRangeFilter = () => {
     const now = new Date()
@@ -65,7 +95,7 @@ export default function TransfersPage() {
   }
 
   const { data: transferStats } = useQuery<TransferStats>({
-    queryKey: ["transferStats", timeRange],
+    queryKey: ["transfers", "stats", timeRange],
     queryFn: async () => {
       const startDate = getTimeRangeFilter()
       let query = supabase
@@ -108,7 +138,7 @@ export default function TransfersPage() {
   })
 
   const { data: recentTransfers } = useQuery<Transfer[]>({
-    queryKey: ["recentTransfers", timeRange],
+    queryKey: ["transfers", "recent", timeRange],
     queryFn: async () => {
       const startDate = getTimeRangeFilter()
       let query = supabase
@@ -220,6 +250,7 @@ export default function TransfersPage() {
                 <TableHead>To</TableHead>
                 <TableHead>Issuer</TableHead>
                 <TableHead>Receiver</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -232,12 +263,41 @@ export default function TransfersPage() {
                   <TableCell>{transfer.to_inventory}</TableCell>
                   <TableCell>{transfer.issuer}</TableCell>
                   <TableCell>{transfer.receiver}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditTransfer(transfer)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteTransfer(transfer.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+      {selectedTransfer && (
+        <EditTransferDialog
+          transfer={selectedTransfer}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onTransferUpdated={() => {
+            refetch()
+            setSelectedTransfer(null)
+          }}
+        />
+      )}
     </div>
   )
 }
